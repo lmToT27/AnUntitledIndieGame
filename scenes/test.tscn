@@ -1,12 +1,21 @@
 [gd_scene format=3 uid="uid://clql7qoa57wur"]
 
 [ext_resource type="Script" uid="uid://mnna0pv6j7e4" path="res://scripts/player/player.gd" id="1_errlg"]
+[ext_resource type="Script" uid="uid://dsfelnv57i265" path="res://scripts/core/worldtest.gd" id="1_iyx0m"]
+[ext_resource type="Script" uid="uid://bthg3ye2y30dw" path="res://scripts/core/world_environment.gd" id="2_bl13t"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_ij1v8"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_errlg"]
 
+[sub_resource type="Environment" id="Environment_iyx0m"]
+
+[sub_resource type="CameraAttributesPhysical" id="CameraAttributesPhysical_74lek"]
+
+[sub_resource type="Compositor" id="Compositor_j5jx5"]
+
 [node name="Test" type="Node3D" unique_id=1758988394]
+script = ExtResource("1_iyx0m")
 
 [node name="Player" type="CharacterBody3D" parent="." unique_id=896075154]
 script = ExtResource("1_errlg")
@@ -16,3 +25,9 @@ mesh = SubResource("CapsuleMesh_ij1v8")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=756550460]
 shape = SubResource("CapsuleShape3D_errlg")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1408553628]
+environment = SubResource("Environment_iyx0m")
+camera_attributes = SubResource("CameraAttributesPhysical_74lek")
+compositor = SubResource("Compositor_j5jx5")
+script = ExtResource("2_bl13t")

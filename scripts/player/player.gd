@@ -1,28 +1,89 @@
 extends CharacterBody3D
 
+enum State {
+	IDLE,
+	COMBAT,
+	SHEATHE
+}
 
-const SPEED = 5.0
-const JUMP_VELOCITY = 4.5
+var current_state = State.IDLE
+var is_night : bool = false
 
+var current_stamina : float = 150.0
+
+const BASE_STAMINA_COST : float = 15.0
+const WEIGHT_FACTOR : float = 2.0
+const HOLD_TIME_REQUIRED : float = 3.0
+
+var hold_timer : float = 0.0
 
 func _physics_process(delta: float) -> void:
-	# Add the gravity.
-	if not is_on_floor():
-		velocity += get_gravity() * delta
+	match current_state:
+		State.IDLE:
+			HandleIdling()
+		State.COMBAT:
+			HandleCombat()
+		State.SHEATHE:
+			HandleSheathe(delta)
 
-	# Handle jump.
-	if Input.is_action_just_pressed("ui_accept") and is_on_floor():
-		velocity.y = JUMP_VELOCITY
+func HandleIdling() -> void:
+	if Input.is_action_just_pressed("attack"):
+		current_state = State.COMBAT
+	elif Input.is_action_just_pressed("sheathe"):
+		current_state = State.SHEATHE
+		hold_timer = 0.0
 
-	# Get the input direction and handle the movement/deceleration.
-	# As good practice, you should replace UI actions with custom gameplay actions.
-	var input_dir := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
-	if direction:
-		velocity.x = direction.x * SPEED
-		velocity.z = direction.z * SPEED
+func HandleCombat() -> void:
+	var stamina_cost : float = BASE_STAMINA_COST
+
+	if is_night:
+		stamina_cost += WEIGHT_FACTOR * GameManager.guilt_score
+	
+	if current_stamina >= stamina_cost:
+		current_stamina -= stamina_cost
+		if is_night:
+			PerformHeavyAttack()
+		else:
+			PerformNormalAttack()
+		await get_tree().create_timer(0.5).timeout 
+		
 	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED)
-		velocity.z = move_toward(velocity.z, 0, SPEED)
+		print(current_stamina,stamina_cost)
+		print("Out of stamina! Cannot attack.")
 
-	move_and_slide()
+	current_state = State.IDLE
+
+
+func HandleSheathe(delta: float) -> void:
+	if Input.is_action_pressed("sheathe"):
+		hold_timer += delta
+		print("Holding... ", hold_timer)
+		
+		if hold_timer >= HOLD_TIME_REQUIRED:
+			if is_night:
+				TriggerTrueEnding()
+			else:
+				PerformNormalSheathe()
+			
+			hold_timer = 0.0
+			current_state = State.IDLE
+			
+	elif Input.is_action_just_released("sheathe"):
+		hold_timer = 0.0
+		current_state = State.IDLE
+
+func PerformNormalAttack() -> void:
+	print("normal attack")
+
+func PerformHeavyAttack() -> void:
+	print("a heavy slash")
+
+func PerformNormalSheathe() -> void:
+	print("normal sheathe")
+
+func TriggerTrueEnding() -> void:
+	if GameManager.CanTriggerTrueEnding():
+		print("true ending triggered!")
+		pass
+	else:
+		PerformNormalSheathe()
